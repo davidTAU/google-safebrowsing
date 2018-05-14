@@ -120,10 +120,11 @@ func (db *database) Init(config *Config, logger *log.Logger) bool {
 	}
 	// Validate that the database threat list stored on disk is not too stale.
 	if db.isStale(dbf.Time) {
-		db.log.Printf("database loaded is stale")
-		db.ml.Lock()
+		db.log.Printf("(David) database loaded is stale")
+	/*	db.ml.Lock()
 		defer db.ml.Unlock()
 		db.setStale()
+	*/
 		return false
 	}
 	// Validate that the database threat list stored on disk is at least a
@@ -153,10 +154,12 @@ func (db *database) Status() error {
 	if db.err != nil {
 		return db.err
 	}
-	if db.isStale(db.last) {
+	// David
+	/*if db.isStale(db.last) {
 		db.setStale()
 		return db.err
 	}
+	*/
 	return nil
 }
 
@@ -186,12 +189,14 @@ func (db *database) Ready() <-chan struct{} {
 // Update synchronizes the local threat lists with those maintained by the
 // global Safe Browsing API servers. If the update is successful, Status should
 // report a nil error.
-func (db *database) Update(ctx context.Context, api api) (time.Duration, bool) {
-	db.mu.Lock()
-	defer db.mu.Unlock()
 
+// David
+func (db *database) Update(ctx context.Context, api api) (time.Duration, bool) {
+/*	db.mu.Lock()
+	defer db.mu.Unlock()
+*/
 	// Construct the request.
-	var numTypes int
+/*	var numTypes int
 	var s []*pb.FetchThreatListUpdatesRequest_ListUpdateRequest
 	for _, td := range db.config.ThreatLists {
 		var state []byte
@@ -216,7 +221,8 @@ func (db *database) Update(ctx context.Context, api api) (time.Duration, bool) {
 		},
 		ListUpdateRequests: s,
 	}
-
+*/
+/*
 	// Query the API for the threat list and update the database.
 	last := db.config.now()
 	resp, err := api.ListUpdate(ctx, req)
@@ -233,15 +239,17 @@ func (db *database) Update(ctx context.Context, api api) (time.Duration, bool) {
 		return delay, false
 	}
 	db.updateAPIErrors = 0
-
+*/	
 	// add jitter to wait time to avoid all servers lining up
 	nextUpdateWait := db.config.UpdatePeriod + time.Duration(rand.Int31n(60)-30)*time.Second
+/*
 	if resp.MinimumWaitDuration != nil {
 		serverMinWait := time.Duration(resp.MinimumWaitDuration.Seconds)*time.Second + time.Duration(resp.MinimumWaitDuration.Nanos)
 		if serverMinWait > nextUpdateWait {
 			nextUpdateWait = serverMinWait
 			db.log.Printf("Server requested next update in %v", nextUpdateWait)
 		}
+	
 	}
 	if len(resp.ListUpdateResponses) != numTypes {
 		db.setError(errors.New("safebrowsing: threat list count mismatch"))
@@ -249,7 +257,8 @@ func (db *database) Update(ctx context.Context, api api) (time.Duration, bool) {
 			len(resp.ListUpdateResponses), numTypes)
 		return nextUpdateWait, false
 	}
-
+*/
+/*
 	// Update the threat database with the response.
 	db.generateThreatsForUpdate()
 	if err := db.tfu.update(resp); err != nil {
@@ -272,7 +281,7 @@ func (db *database) Update(ctx context.Context, api api) (time.Duration, bool) {
 			db.log.Printf("save failure: %v", err)
 		}
 	}
-
+*/
 	return nextUpdateWait, true
 }
 
@@ -458,6 +467,8 @@ func loadDatabase(path string) (db databaseFormat, err error) {
 // update updates the threat list according to the API response.
 func (tfu threatsForUpdate) update(resp *pb.FetchThreatListUpdatesResponse) error {
 	// For each update response do the removes and adds
+// David
+/*
 	for _, m := range resp.GetListUpdateResponses() {
 		td := ThreatDescriptor{
 			PlatformType:    PlatformType(m.PlatformType),
@@ -532,5 +543,6 @@ func (tfu threatsForUpdate) update(resp *pb.FetchThreatListUpdatesResponse) erro
 		phs.State = m.NewClientState
 		tfu[td] = phs
 	}
+*/
 	return nil
 }
